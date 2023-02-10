@@ -27,4 +27,9 @@ The library is designed to work with the STM32 (official) Arduino Core, so you c
 To use meFDCAN in your sketch, include the library header file:
 
 ```c++
-#include <meFDCAN.h>
+#include <meFDCAN.h>```
+
+Two H files are also required in your project folder.  Check out the examples. you can get copies from there.
+
+- build_opt.h
+- hal_conf_extra.h
