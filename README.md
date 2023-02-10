@@ -42,6 +42,10 @@ Two 'include' files are also required in your project folder.  Check out the exa
 - build_opt.h
 - hal_conf_extra.h
 
+### PA11, PA12
+
+If you wish to use PA11 and PA12, From the menu ```<Tools><USB Support>``` set to NONE.
+
 ### initialisation
 
 
