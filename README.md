@@ -53,7 +53,10 @@ Generic microcontroller selection with STM32 Arduino are mostly setup to use int
 #include "meClock_G473.h"
 ```
 
+### meCANbuffer
 
+A FIFO or circular buffer that can be used particularly for recording messages received from Interrupt Handlers.
+https://github.com/mackelec/meCANbuffer
 
 ### initialisation
 
