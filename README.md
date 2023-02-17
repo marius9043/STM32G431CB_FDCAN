@@ -47,6 +47,7 @@ Two 'include' files are also required in your project folder.  Check out the exa
 If you wish to use PA11 and PA12, From the menu ```<Tools><USB Support>``` should be set to ```None.```
 
 ### External Crystal
+#### https://github.com/mackelec/STM32-External-Crystals---SystemClock_Config
 
 Generic microcontroller selection with STM32 Arduino are mostly setup to use internal oscillators, as the stm32G473 is.  If you are going to use an external crystal, not a bad idea for CAN comms, then refer to my examples. The ```meClock_G473.h``` file can be found there.  This file is set up for a 8MHz crystal.  The ```build_opt.h``` defines the crystal is 8Mhz. Add the #include as shown in the main file.
 ```
