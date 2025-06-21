@@ -1,12 +1,12 @@
 #pragma once
 
-
-
 #include <arduino.h>
+#include "stm32g4xx_hal.h"
+#include "stm32g4xx_hal_fdcan.h"
 #define PROC_G4 340
 
 #ifdef STM32G4xx
-  #define _SERIES PROC_G4
+#define _SERIES PROC_G4
 #endif
 
 /**
@@ -20,7 +20,7 @@
  * @return  true if the initialization was successful, false otherwise
  */
 
-bool meFDCAN_init(int bitrate=125,int canPort=1,int rxPin=PA11,int txPin=PA12);
+bool meFDCAN_init(int bitrate = 125, int canPort = 1, int rxPin = PA11, int txPin = PA12);
 
 /**
  * @brief   Transmit data over the FDCAN module
@@ -33,7 +33,7 @@ bool meFDCAN_init(int bitrate=125,int canPort=1,int rxPin=PA11,int txPin=PA12);
  * @return  true if the transmission was successful, false otherwise
  */
 
-bool meFDCAN_transmit(int txId, uint8_t *txData,int canPort=1, int len = 8);
+bool meFDCAN_transmit(int txId, uint8_t *txData, int canPort = 1, int len = 8);
 
 /**
  * @brief   Receive data over the FDCAN module
@@ -48,18 +48,18 @@ bool meFDCAN_transmit(int txId, uint8_t *txData,int canPort=1, int len = 8);
  * @return  The index of the received data
  */
 
-int  meFDCAN_receive(uint32_t *id,uint8_t *len,uint8_t rxData[],int canPort=1,int *type=nullptr,int fifo=0);
+int meFDCAN_receive(uint32_t *id, uint8_t *len, uint8_t rxData[], int canPort = 1, int *type = nullptr, int fifo = 0);
 
 /**
  * @brief   Set the receive interrupt for the FDCAN module
- * 
+ *
  * @param   canPort  The port number for the FDCAN module (default = 1)
  * @param   fifo     The FIFO number to use for the interrupt (default = 0)
- * 
+ *
  * @return  true if the setting of the receive interrupt was successful, false otherwise
  */
 
-bool me_FDCAN_setRxInterrupt(int canPort=1,int fifo=0);
+bool me_FDCAN_setRxInterrupt(int canPort = 1, int fifo = 0);
 
 /**
     @brief Add a filter for the FDCAN module
@@ -71,22 +71,20 @@ bool me_FDCAN_setRxInterrupt(int canPort=1,int fifo=0);
     @return The index of the added filter
 */
 
-
-int  me_FDCAN_addFilter(uint32_t id1,uint32_t id2,uint32_t filtertype=FDCAN_FILTER_RANGE,int canPort=1); 
-
+int me_FDCAN_addFilter(uint32_t id1, uint32_t id2, uint32_t filtertype = FDCAN_FILTER_RANGE, int canPort = 1);
 
 //------------   END of User Functions ----------
 
 /*
  *      Bir Rate Parameters - CAN Controller
- * 
+ *
 
 //-- http://www.bittiming.can-wiki.info/
 
 
 /**
  * @brief   Struct to hold the bit rate settings for the CAN bus
- * 
+ *
  * Clock:     The clock frequency for the CAN bus (MHz)
  * bitrate:   The desired bit rate for the CAN bus (kHz)
  * prescale:  The prescaler value for the CAN bus
@@ -106,26 +104,22 @@ struct bitRateSetting
 /**
  * @brief   Global variable to hold the current bit rate setting for the CAN bus
  */
-static bitRateSetting  canSetting;
+static bitRateSetting canSetting;
 
 /**
  * @brief   Array of bit rate settings for the CAN bus
  */
 bitRateSetting brSettings[] = {
-                              {150,50,12,218,31},
-                              {150,125,40,25,4},
-                              {150,250,3,174,25},
-                              {150,500,2,130,19},
-                              {150,1000,1,130,19}
-                              };
-
-
-
+    {150, 50, 12, 218, 31},
+    {150, 125, 40, 25, 4},
+    {150, 250, 3, 174, 25},
+    {150, 500, 2, 130, 19},
+    {150, 1000, 1, 130, 19},
+    {170, 125, 85, 13, 2}};
 
 static FDCAN_HandleTypeDef hfdcan1;
-static FDCAN_HandleTypeDef hfdcan2;
-static FDCAN_HandleTypeDef hfdcan3;
-
+// static FDCAN_HandleTypeDef hfdcan2;
+// static FDCAN_HandleTypeDef hfdcan3;
 
 struct meFDCAN_stdFilter
 {
@@ -136,18 +130,16 @@ struct meFDCAN_stdFilter
   uint32_t id2;
 };
 
-
-
 class Filter
 {
 public:
   meFDCAN_stdFilter stdfilters[18];
   bool filtered;
 
-  int addFilter(meFDCAN_stdFilter filter) 
+  int addFilter(meFDCAN_stdFilter filter)
   {
     int i = returnNextFilterIndex();
-    if (i >= 0 && i < 18) 
+    if (i >= 0 && i < 18)
     {
       filtered = true;
       stdfilters[i].filter = true;
@@ -155,10 +147,10 @@ public:
       stdfilters[i].filtertype = filter.filtertype;
       stdfilters[i].id1 = filter.id1;
       stdfilters[i].id2 = filter.id2;
-      NewFilterIndex ++;
+      NewFilterIndex++;
       return index;
-    } 
-    else 
+    }
+    else
     {
       return -1;
     }
@@ -176,7 +168,7 @@ public:
   }
   Filter()
   {
-    index=0;
+    index = 0;
     NewFilterIndex = 0;
     filtered = false;
     for (int i = 0; i < 18; i++)
@@ -184,7 +176,7 @@ public:
       stdfilters[i].filter = false;
     }
   }
-  
+
   void startFilter()
   {
     index = 0;
@@ -205,22 +197,22 @@ public:
   }
 
 private:
-int index;                //-- index of next filter to send
-uint32_t NewFilterIndex;  //-- used when Adding new Filter
-  
+  int index;               //-- index of next filter to send
+  uint32_t NewFilterIndex; //-- used when Adding new Filter
+
 }; //---- END class Filter
 
 class Filters
 {
 public:
   Filter filter[3];
-  
+
   bool isFilter(int canPort)
   {
     if (canPort >= 1 && canPort <= 3)
       return filter[canPort - 1].filtered;
   }
-  int addFilter(int canPort,meFDCAN_stdFilter newfilter)
+  int addFilter(int canPort, meFDCAN_stdFilter newfilter)
   {
     if (canPort >= 1 && canPort <= 3)
       return filter[canPort - 1].addFilter(newfilter);
@@ -231,97 +223,142 @@ public:
   {
     if (canPort >= 1 && canPort <= 3)
       filter[canPort - 1].startFilter();
-    //else
-      // error handling code here
+    // else
+    //  error handling code here
   }
 
   meFDCAN_stdFilter nextFilter(int canPort)
   {
     if (canPort >= 1 && canPort <= 3)
       return filter[canPort - 1].nextFilter();
-    //else
-      // error handling code here
+    // else
+    //  error handling code here
   }
-};  //----- END of class Filters
-
+}; //----- END of class Filters
 
 Filters canFilters;
 
-
-
-
 static bool setupFDCANpin(int);
 static int findCanSettings(int, int);
-static FDCAN_HandleTypeDef*  canPortHandle(int );
-static uint32_t int_to_fdcan_dlc(int ); 
-static uint8_t rxDataLength(uint32_t );
+static FDCAN_HandleTypeDef *canPortHandle(int);
+static uint32_t int_to_fdcan_dlc(int);
+static uint8_t rxDataLength(uint32_t);
 static bool meFDCAN_setupFilters(int);
-static bool meFDCAN_addConfigFilter(int canPort,meFDCAN_stdFilter * mefilter);
-static uint8_t rxDataLengthFD(uint32_t _data_length, bool FD=false); 
+static bool meFDCAN_addConfigFilter(int canPort, meFDCAN_stdFilter *mefilter);
+static uint8_t rxDataLengthFD(uint32_t _data_length, bool FD = false);
 
 /*******************************************************
- * 
+ *
  *            CAN INIT
- * 
+ *
  *******************************************************/
 
-bool meFDCAN_init(int bitrate,int canPort,int rxPin,int txPin)
+bool meFDCAN_init(int bitrate, int canPort, int rxPin, int txPin)
 {
   FDCAN_HandleTypeDef *fdcan;
   switch (canPort)
   {
-    case 1: hfdcan1.Instance = FDCAN1;fdcan = &hfdcan1;break;
-    case 2: hfdcan2.Instance = FDCAN2;fdcan = &hfdcan2;break;
-    case 3: hfdcan3.Instance = FDCAN3;fdcan = &hfdcan3;break;
-    default: return (false);break;
+  case 1:
+    hfdcan1.Instance = FDCAN1;
+    fdcan = &hfdcan1;
+    break;
+  // case 2:
+  //   hfdcan2.Instance = FDCAN2;
+  //   fdcan = &hfdcan2;
+  //   break;
+  // case 3:
+  //   hfdcan3.Instance = FDCAN3;
+  //   fdcan = &hfdcan3;
+  //   break;
+  default:
+    Serial1.println("meFDCAN_init: Invalid CAN Port.");
+    return (false);
+    break;
   }
   bool success = true;
-  
-  RCC_PeriphCLKInitTypeDef periphClkInit = { };
+
+  RCC_PeriphCLKInitTypeDef periphClkInit = {};
   HAL_RCCEx_GetPeriphCLKConfig(&periphClkInit);
-  
+
   // Initializes the peripherals clocks
   periphClkInit.PeriphClockSelection |= RCC_PERIPHCLK_FDCAN;
   periphClkInit.FdcanClockSelection = RCC_FDCANCLKSOURCE_PCLK1;
   if (HAL_RCCEx_PeriphCLKConfig(&periphClkInit) != HAL_OK)
   {
-    //Error_Handler();
-    Serial1.println("HAL_RCC FAIL");
+    // Error_Handler();
+    Serial1.println("meFDCAN_init: HAL_RCCEx_PeriphCLKConfig FAIL");
     return (false);
   }
+  Serial1.println("meFDCAN_init: PeriphCLKConfig OK");
 
   // Peripheral clock enable
   __HAL_RCC_FDCAN_CLK_ENABLE();
   //__HAL_RCC_GPIOB_CLK_ENABLE();
+  if (!setupFDCANpin(rxPin))
+  {
+    Serial1.println("meFDCAN_init: RX Pin setup FAIL");
+    return (false);
+  }
+  Serial1.println("meFDCAN_init: RX Pin setup OK");
+  // if (!setupFDCANpin(rxPin))
+  //   Serial1.println("meFDCAN_init: RX Pin setup FAIL"); // Add this
+  // return (false);
+  // Serial1.println("meFDCAN_init: RX Pin setup OK"); // Add this
 
-  if (!setupFDCANpin(rxPin)) return (false);
-  if (!setupFDCANpin(txPin)) return (false);
+  if (!setupFDCANpin(txPin))
+  {                                                     // This is for the TX pin (PB9)
+    Serial1.println("meFDCAN_init: TX Pin setup FAIL"); // <--- Make sure this is present
+    return (false);
+  }
+  Serial1.println("meFDCAN_init: TX Pin setup OK");
+
+  // if (!setupFDCANpin(txPin))
+  //   Serial1.println("meFDCAN_init: TX Pin setup FAIL"); // Add this
+  // return (false);
+  // Serial1.println("meFDCAN_init: TX Pin setup OK"); // Add this
 
   FDCAN_InitTypeDef *init = &fdcan->Init;
-  
+
   init->ClockDivider = FDCAN_CLOCK_DIV1;
-  init->FrameFormat = FDCAN_FRAME_CLASSIC; //FDCAN_FRAME_FD_BRS; FDCAN_FRAME_FD_NO_BRS
+  init->FrameFormat = FDCAN_FRAME_CLASSIC; // FDCAN_FRAME_FD_BRS; FDCAN_FRAME_FD_NO_BRS
   init->Mode = FDCAN_MODE_NORMAL;
+  // init->Mode = FDCAN_MODE_EXTERNAL_LOOPBACK;
   init->AutoRetransmission = DISABLE;
+  // init->AutoRetransmission = ENABLE;
   init->TransmitPause = ENABLE;
+  // init->TransmitPause = DISABLE;
   init->ProtocolException = DISABLE;
 
   int canClock;
   uint32_t pclk1_frequency = HAL_RCC_GetPCLK1Freq();
-  canClock = (int)pclk1_frequency/1000000;
-  int index = findCanSettings(canClock,bitrate);
-  if (index < 0) return false;
+  canClock = (int)pclk1_frequency / 1000000;
+  Serial1.print("PCLK1 Frequency (MHz): ");
+  Serial1.println(canClock); // Add this
 
-  
+  int index = findCanSettings(canClock, bitrate);
+  if (index < 0)
+  {
+    Serial1.println("meFDCAN_init: CAN settings not found."); // <--- Make sure this is present
+    return false;
+  }
+  Serial1.println("meFDCAN_init: CAN settings found.");
+
+  // int index = findCanSettings(canClock, bitrate);
+  // if (index < 0)
+  //   Serial1.println("meFDCAN_init: CAN settings not found."); // Add this
+  // return false;
+  // Serial1.println("meFDCAN_init: CAN settings found."); // Add this
+
   /* Configure the CAN peripheral */
-  
+
   init->NominalSyncJumpWidth = 1;
-  
+
   init->NominalPrescaler = canSetting.prescale;
   init->NominalTimeSeg1 = canSetting.Seg1;
   init->NominalTimeSeg2 = canSetting.Seg2;
-  //--- not used in Normal 
-  init->DataPrescaler = canSetting.prescale;;
+  //--- not used in Normal
+  init->DataPrescaler = canSetting.prescale;
+  ;
   init->DataSyncJumpWidth = 1;
   init->DataTimeSeg1 = canSetting.Seg1;
   init->DataTimeSeg2 = canSetting.Seg2;
@@ -331,59 +368,76 @@ bool meFDCAN_init(int bitrate,int canPort,int rxPin,int txPin)
   init->TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(fdcan) != HAL_OK)
   {
+    Serial1.println("meFDCAN_init: HAL_FDCAN_Init FAIL"); // Modified existing
     return (false);
   }
+  Serial1.println("meFDCAN_init: HAL_FDCAN_Init OK"); // Add this
+
   //----------  Filters Setup
-  meFDCAN_setupFilters(canPort);
-  
+  // meFDCAN_setupFilters(canPort);
+  if (!meFDCAN_setupFilters(canPort))
+  {
+    Serial1.println("meFDCAN_init: Filter setup FAIL"); // Add this
+    return (false);
+  }
+  Serial1.println("meFDCAN_init: Filter setup OK"); // Add this
+
   if (HAL_FDCAN_Start(fdcan) != HAL_OK)
   {
+    Serial1.println("meFDCAN_init: HAL_FDCAN_Start FAIL"); // Modified existing
     return (false);
   }
+  Serial1.println("meFDCAN_init: HAL_FDCAN_Start OK"); // Add this
   return (true);
-}                  //---------       END of Init
-
+} //---------       END of Init
 
 /*****************
- * 
+ *
  *   RECEIVE
- * 
+ *
  *****************/
- 
-int  meFDCAN_receive(uint32_t *id,uint8_t *len,uint8_t rxData[], int canPort,int *type,int fifo)
+
+int meFDCAN_receive(uint32_t *id, uint8_t *len, uint8_t rxData[], int canPort, int *type, int fifo)
 {
   FDCAN_HandleTypeDef *fdcan = canPortHandle(canPort);
-  if (fdcan == NULL ) return (-1);
+  if (fdcan == NULL)
+    return (-1);
   uint32_t _fifo = FDCAN_RX_FIFO0;
-  if (fifo == 1) _fifo = FDCAN_RX_FIFO1;
-  int lvl = (int) HAL_FDCAN_GetRxFifoFillLevel(fdcan, _fifo);
-  if (lvl == 0) return (lvl);
-  
+  if (fifo == 1)
+    _fifo = FDCAN_RX_FIFO1;
+  int lvl = (int)HAL_FDCAN_GetRxFifoFillLevel(fdcan, _fifo);
+  if (lvl == 0)
+    return (lvl);
+
   FDCAN_RxHeaderTypeDef rxHeader;
-  if (HAL_FDCAN_GetRxMessage(fdcan, _fifo, &rxHeader, rxData) != HAL_OK) return (-1);
+  if (HAL_FDCAN_GetRxMessage(fdcan, _fifo, &rxHeader, rxData) != HAL_OK)
+    return (-1);
   *id = rxHeader.Identifier;
   if (type != nullptr)
-    {
-        if (rxHeader.IdType == FDCAN_STANDARD_ID) *type = 1;
-        if (rxHeader.IdType == FDCAN_EXTENDED_ID) *type = -1;
-    }
-  //if (rxHeader.IdType != FDCAN_STANDARD_ID) {return -2;}
+  {
+    if (rxHeader.IdType == FDCAN_STANDARD_ID)
+      *type = 1;
+    if (rxHeader.IdType == FDCAN_EXTENDED_ID)
+      *type = -1;
+  }
+  // if (rxHeader.IdType != FDCAN_STANDARD_ID) {return -2;}
   //*len = rxDataLength(rxHeader.DataLength);
-  
-  *len = rxDataLengthFD(rxHeader.DataLength,false);
+
+  *len = rxDataLengthFD(rxHeader.DataLength, false);
   return (lvl);
 }
 
 /****************************
- * 
+ *
  *       Transmit
- * 
+ *
  ****************************/
 
-bool meFDCAN_transmit(int txId, uint8_t *txData,int canPort, int len)
+bool meFDCAN_transmit(int txId, uint8_t *txData, int canPort, int len)
 {
   FDCAN_HandleTypeDef *fdcan = canPortHandle(canPort);
-  if (fdcan == NULL ) return (false);
+  if (fdcan == NULL)
+    return (false);
   bool success = true;
   uint32_t dlc = int_to_fdcan_dlc(len);
   FDCAN_TxHeaderTypeDef TxHeader;
@@ -396,7 +450,7 @@ bool meFDCAN_transmit(int txId, uint8_t *txData,int canPort, int len)
   TxHeader.FDFormat = FDCAN_CLASSIC_CAN;
   TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
   TxHeader.MessageMarker = 0;
-  if (HAL_FDCAN_AddMessageToTxFifoQ(fdcan, &TxHeader,  txData) != HAL_OK)
+  if (HAL_FDCAN_AddMessageToTxFifoQ(fdcan, &TxHeader, txData) != HAL_OK)
   {
     success = false;
   }
@@ -406,28 +460,29 @@ bool meFDCAN_transmit(int txId, uint8_t *txData,int canPort, int len)
  *                                  Filter Functions
  *************************************************************************************/
 
-int me_FDCAN_addFilter(uint32_t id1,uint32_t id2,uint32_t filtertype,int canPort)
+int me_FDCAN_addFilter(uint32_t id1, uint32_t id2, uint32_t filtertype, int canPort)
 {
   meFDCAN_stdFilter filter;
   filter.filterindex = 0;
   filter.id1 = id1;
   filter.id2 = id2;
   filter.filtertype = filtertype;
-  return canFilters.addFilter(canPort,filter);
+  return canFilters.addFilter(canPort, filter);
 }
-
-
 
 bool meFDCAN_setupFilters(int canPort)
 {
-  if (canPort <1 || canPort >3) return false;
-  if (! canFilters.isFilter(canPort)) return (true);
+  if (canPort < 1 || canPort > 3)
+    return false;
+  if (!canFilters.isFilter(canPort))
+    return (true);
   while (1)
   {
     meFDCAN_stdFilter filter = canFilters.nextFilter(canPort);
-    if (filter.filter == false)    break;
-    bool ans = meFDCAN_addConfigFilter(canPort,&filter);
-    if (!ans) 
+    if (filter.filter == false)
+      break;
+    bool ans = meFDCAN_addConfigFilter(canPort, &filter);
+    if (!ans)
     {
       return (false);
     }
@@ -435,17 +490,14 @@ bool meFDCAN_setupFilters(int canPort)
   HAL_StatusTypeDef result;
   FDCAN_HandleTypeDef *fdcan = canPortHandle(canPort);
   result = HAL_FDCAN_ConfigGlobalFilter(fdcan, FDCAN_REJECT, FDCAN_REJECT, FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
-  if (result != HAL_OK) 
+  if (result != HAL_OK)
   {
     return (false);
   }
   return (true);
 }
 
-
-
-
-bool meFDCAN_addConfigFilter(int canPort,meFDCAN_stdFilter * mefilter)
+bool meFDCAN_addConfigFilter(int canPort, meFDCAN_stdFilter *mefilter)
 {
   FDCAN_HandleTypeDef *fdcan = canPortHandle(canPort);
   FDCAN_FilterTypeDef filter_config;
@@ -455,264 +507,290 @@ bool meFDCAN_addConfigFilter(int canPort,meFDCAN_stdFilter * mefilter)
   filter_config.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
   filter_config.FilterID1 = mefilter->id1;
   filter_config.FilterID2 = mefilter->id2;
-  if(HAL_FDCAN_ConfigFilter(fdcan, &filter_config) != HAL_OK)
+  if (HAL_FDCAN_ConfigFilter(fdcan, &filter_config) != HAL_OK)
   {
-      // handle error
-      Serial1.println("BAD FILTER 2");
-      return (false);
-  }  
+    // handle error
+    Serial1.println("BAD FILTER 2");
+    return (false);
+  }
   return (true);
 }
-
-
 
 /**********************************************************
  *                 Interrupts
  **********************************************************/
 
-bool me_FDCAN_setRxInterrupt(int canPort,int fifo)
+bool me_FDCAN_setRxInterrupt(int canPort, int fifo)
 {
   IRQn_Type irq;
   FDCAN_HandleTypeDef *fdcan = canPortHandle(canPort);
-  if (fdcan == NULL ) return (false);
+  if (fdcan == NULL)
+    return (false);
   bool success = true;
   uint32_t _fifo = FDCAN_RX_FIFO0;
-  if (fifo == 1) _fifo = FDCAN_RX_FIFO1;
+  if (fifo == 1)
+    _fifo = FDCAN_RX_FIFO1;
   if (HAL_FDCAN_ActivateNotification(fdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)
   {
-      return (false);
+    return (false);
   }
-  if (canPort == 1) {irq = FDCAN1_IT0_IRQn;}
-  if (canPort == 2) {irq = FDCAN2_IT0_IRQn;}
-  if (canPort == 3) {irq = FDCAN3_IT0_IRQn;}
-  
+  if (canPort == 1)
+  {
+    irq = FDCAN1_IT0_IRQn;
+  }
+  // if (canPort == 2)
+  // {
+  //   irq = FDCAN2_IT0_IRQn;
+  // }
+  // if (canPort == 3)
+  // {
+  //   irq = FDCAN3_IT0_IRQn;
+  // }
+
   /* Enable FDCAN IRQ */
   HAL_NVIC_SetPriority(irq, 0, 0);
   HAL_NVIC_EnableIRQ(irq);
   return (true);
 }
 
-
 /****************************************************
  *                  Misc
  ****************************************************/
- 
-FDCAN_HandleTypeDef* canPortHandle(int canPort)
+
+FDCAN_HandleTypeDef *canPortHandle(int canPort)
 {
-  FDCAN_HandleTypeDef *fdcan=NULL;
-  
+  FDCAN_HandleTypeDef *fdcan = NULL;
+
   switch (canPort)
   {
-    case 1: fdcan = &hfdcan1;break;
-    case 2: fdcan = &hfdcan2;break;
-    case 3: fdcan = &hfdcan3;break;
+  case 1:
+    fdcan = &hfdcan1;
+    break;
+    // case 2:
+    //   fdcan = &hfdcan2;
+    //   break;
+    // case 3:
+    //   fdcan = &hfdcan3;
+    //   break;
   }
   return fdcan;
 }
 
-int meFDCAN_Port(FDCAN_HandleTypeDef * fdcan)
+int meFDCAN_Port(FDCAN_HandleTypeDef *fdcan)
 {
   if (fdcan->Instance == FDCAN1)
   {
     return (1);
   }
-  if (fdcan->Instance == FDCAN2)
-  {
-    return (2);
-  }
-  if (fdcan->Instance == FDCAN3)
-  {
-    return (3);
-  }
+  // if (fdcan->Instance == FDCAN2)
+  // {
+  //   return (2);
+  // }
+  // if (fdcan->Instance == FDCAN3)
+  // {
+  //   return (3);
+  // }
 }
 
 bool setupFDCANpin(int _pin)
 {
   bool success = true;
   GPIO_InitTypeDef gpio_init;
+  Serial1.print("setupFDCANpin: Attempting to configure pin: ");
+  Serial1.println(_pin); // Print the raw integer value of the pin
+
   switch (_SERIES)
   {
-    case PROC_G4:
-      switch (_pin)
-      {
-        //  CAN1
-        case PA11: // rx
-        __HAL_RCC_GPIOA_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_11;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN1;
-          HAL_GPIO_Init(GPIOA, &gpio_init);
-        break;
-        case PA12: // tx
-        __HAL_RCC_GPIOA_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_12;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN1;
-          HAL_GPIO_Init(GPIOA, &gpio_init);
-        break;
-        
-        
-        case PB8: // rx
-          __HAL_RCC_GPIOB_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_8;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN1;
-          HAL_GPIO_Init(GPIOB, &gpio_init);
-        break;
-        case PB9: // tx
-          __HAL_RCC_GPIOB_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_9;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN1;
-          HAL_GPIO_Init(GPIOB, &gpio_init);
-        break;
+  case PROC_G4:
+    switch (_pin)
+    {
+    //  CAN1
+    case PA11: // rx
+      Serial1.println("setupFDCANpin: Matched PA11.");
+      __HAL_RCC_GPIOA_CLK_ENABLE();
+      gpio_init.Pin = GPIO_PIN_11;
+      gpio_init.Mode = GPIO_MODE_AF_PP;
+      gpio_init.Pull = GPIO_NOPULL;
+      gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      gpio_init.Alternate = GPIO_AF9_FDCAN1;
+      HAL_GPIO_Init(GPIOA, &gpio_init);
+      break;
+    case PA12: // tx
+      Serial1.println("setupFDCANpin: Matched PA12.");
+      __HAL_RCC_GPIOA_CLK_ENABLE();
+      gpio_init.Pin = GPIO_PIN_12;
+      gpio_init.Mode = GPIO_MODE_AF_PP;
+      gpio_init.Pull = GPIO_NOPULL;
+      gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      gpio_init.Alternate = GPIO_AF9_FDCAN1;
+      HAL_GPIO_Init(GPIOA, &gpio_init);
+      break;
+    case PB8: // rx
+      Serial1.println("setupFDCANpin: Matched PB8.");
+      __HAL_RCC_GPIOB_CLK_ENABLE();
+      gpio_init.Pin = GPIO_PIN_8;
+      gpio_init.Mode = GPIO_MODE_AF_PP;
+      gpio_init.Pull = GPIO_NOPULL;
+      gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      gpio_init.Alternate = GPIO_AF9_FDCAN1;
+      HAL_GPIO_Init(GPIOB, &gpio_init);
+      break;
+    case PB9: // tx
+      Serial1.println("setupFDCANpin: Matched PB9.");
+      __HAL_RCC_GPIOB_CLK_ENABLE();
+      gpio_init.Pin = GPIO_PIN_9;
+      gpio_init.Mode = GPIO_MODE_AF_PP;
+      gpio_init.Pull = GPIO_NOPULL;
+      gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      gpio_init.Alternate = GPIO_AF9_FDCAN1;
+      HAL_GPIO_Init(GPIOB, &gpio_init);
+      break;
+    case 49: // PD0 // rx
+      Serial1.println("setupFDCANpin: Matched PD0 (49).");
+      __HAL_RCC_GPIOD_CLK_ENABLE();
+      gpio_init.Pin = GPIO_PIN_0;
+      gpio_init.Mode = GPIO_MODE_AF_PP;
+      gpio_init.Pull = GPIO_NOPULL;
+      gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      gpio_init.Alternate = GPIO_AF9_FDCAN1;
+      HAL_GPIO_Init(GPIOD, &gpio_init);
+      break;
+    case 50: // PD1 // tx
+      Serial1.println("setupFDCANpin: Matched PD1 (50).");
+      __HAL_RCC_GPIOD_CLK_ENABLE();
+      gpio_init.Pin = GPIO_PIN_1;
+      gpio_init.Mode = GPIO_MODE_AF_PP;
+      gpio_init.Pull = GPIO_NOPULL;
+      gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      gpio_init.Alternate = GPIO_AF9_FDCAN1;
+      HAL_GPIO_Init(GPIOD, &gpio_init);
+      break;
 
-        case 49:  // PD0 // rx
-          __HAL_RCC_GPIOD_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_0;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN1;
-          HAL_GPIO_Init(GPIOD, &gpio_init);
-        break;
+      // case PB5: // CAN2  rx
+      //   __HAL_RCC_GPIOB_CLK_ENABLE();
+      //   gpio_init.Pin = GPIO_PIN_5;
+      //   gpio_init.Mode = GPIO_MODE_AF_PP;
+      //   gpio_init.Pull = GPIO_NOPULL;
+      //   gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      //   gpio_init.Alternate = GPIO_AF9_FDCAN2;
+      //   HAL_GPIO_Init(GPIOB, &gpio_init);
+      //   break;
+      // case PB6: // CAN2  tx
+      //   __HAL_RCC_GPIOB_CLK_ENABLE();
+      //   gpio_init.Pin = GPIO_PIN_6;
+      //   gpio_init.Mode = GPIO_MODE_AF_PP;
+      //   gpio_init.Pull = GPIO_NOPULL;
+      //   gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      //   gpio_init.Alternate = GPIO_AF9_FDCAN2;
+      //   HAL_GPIO_Init(GPIOB, &gpio_init);
+      //   break;
+      // case PB12: // CAN2  rx
+      //   __HAL_RCC_GPIOB_CLK_ENABLE();
+      //   gpio_init.Pin = GPIO_PIN_12;
+      //   gpio_init.Mode = GPIO_MODE_AF_PP;
+      //   gpio_init.Pull = GPIO_NOPULL;
+      //   gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      //   gpio_init.Alternate = GPIO_AF9_FDCAN2;
+      //   HAL_GPIO_Init(GPIOB, &gpio_init);
+      //   break;
+      // case PB13: // CAN2  tx
+      //   __HAL_RCC_GPIOB_CLK_ENABLE();
+      //   gpio_init.Pin = GPIO_PIN_13;
+      //   gpio_init.Mode = GPIO_MODE_AF_PP;
+      //   gpio_init.Pull = GPIO_NOPULL;
+      //   gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      //   gpio_init.Alternate = GPIO_AF9_FDCAN2;
+      //   HAL_GPIO_Init(GPIOB, &gpio_init);
+      //   break;
+      // case PA8: // CAN3 rx
+      //   __HAL_RCC_GPIOA_CLK_ENABLE();
+      //   gpio_init.Pin = GPIO_PIN_8;
+      //   gpio_init.Mode = GPIO_MODE_AF_PP;
+      //   gpio_init.Pull = GPIO_NOPULL;
+      //   gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      //   gpio_init.Alternate = GPIO_AF11_FDCAN3;
+      //   HAL_GPIO_Init(GPIOA, &gpio_init);
+      //   break;
+      // case PA15: // CAN3 tx
+      //   __HAL_RCC_GPIOA_CLK_ENABLE();
+      //   gpio_init.Pin = GPIO_PIN_15;
+      //   gpio_init.Mode = GPIO_MODE_AF_PP;
+      //   gpio_init.Pull = GPIO_NOPULL;
+      //   gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      //   gpio_init.Alternate = GPIO_AF11_FDCAN3;
+      //   HAL_GPIO_Init(GPIOA, &gpio_init);
+      //   break;
+      // case PB3: // CAN3 rx
+      //   __HAL_RCC_GPIOB_CLK_ENABLE();
+      //   gpio_init.Pin = GPIO_PIN_3;
+      //   gpio_init.Mode = GPIO_MODE_AF_PP;
+      //   gpio_init.Pull = GPIO_NOPULL;
+      //   gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      //   gpio_init.Alternate = GPIO_AF11_FDCAN3;
+      //   HAL_GPIO_Init(GPIOB, &gpio_init);
+      //   break;
+      // case PB4: // CAN3 tx
+      //   __HAL_RCC_GPIOB_CLK_ENABLE();
+      //   gpio_init.Pin = GPIO_PIN_4;
+      //   gpio_init.Mode = GPIO_MODE_AF_PP;
+      //   gpio_init.Pull = GPIO_NOPULL;
+      //   gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+      //   gpio_init.Alternate = GPIO_AF11_FDCAN3;
+      //   HAL_GPIO_Init(GPIOB, &gpio_init);
+      //   break;
 
-        case 50:  // PD1 // tx
-          __HAL_RCC_GPIOD_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_1;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN1;
-          HAL_GPIO_Init(GPIOD, &gpio_init);
-        break;
-
-        case PB5: // CAN2  rx
-          __HAL_RCC_GPIOB_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_5;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN2;
-          HAL_GPIO_Init(GPIOB, &gpio_init);
-        break;
-        case PB6: // CAN2  tx
-          __HAL_RCC_GPIOB_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_6;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN2;
-          HAL_GPIO_Init(GPIOB, &gpio_init);
-        break;
-        case PB12: // CAN2  rx
-          __HAL_RCC_GPIOB_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_12;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN2;
-          HAL_GPIO_Init(GPIOB, &gpio_init);
-        break;
-        case PB13: // CAN2  tx
-          __HAL_RCC_GPIOB_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_13;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF9_FDCAN2;
-          HAL_GPIO_Init(GPIOB, &gpio_init);
-        break;
-        case PA8: // CAN3 rx
-        __HAL_RCC_GPIOA_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_8;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF11_FDCAN3;
-          HAL_GPIO_Init(GPIOA, &gpio_init);
-        break;
-        case PA15: // CAN3 tx
-        __HAL_RCC_GPIOA_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_15;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF11_FDCAN3;
-          HAL_GPIO_Init(GPIOA, &gpio_init);
-        break;
-        case PB3: // CAN3 rx
-          __HAL_RCC_GPIOB_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_3;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF11_FDCAN3;
-          HAL_GPIO_Init(GPIOB, &gpio_init);
-        break;
-        case PB4: // CAN3 tx
-          __HAL_RCC_GPIOB_CLK_ENABLE();
-          gpio_init.Pin = GPIO_PIN_4;
-          gpio_init.Mode = GPIO_MODE_AF_PP;
-          gpio_init.Pull = GPIO_NOPULL;
-          gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
-          gpio_init.Alternate = GPIO_AF11_FDCAN3;
-          HAL_GPIO_Init(GPIOB, &gpio_init);
-        break;
-
-        default:
-          success = false;
-          break;
-      }
+    default:
+      Serial1.print("setupFDCANpin: Pin ");
+      Serial1.print(_pin);
+      Serial1.println(" not matched to a known FDCAN pin for G4 series.");
+      success = false;
+      break;
+    }
     break;
-    
+  default:
+    Serial1.print("setupFDCANpin: Unknown processor series: ");
+    Serial1.println(_SERIES);
+    success = false;
+    break;
   }
+  Serial1.print("setupFDCANpin: Returning ");
+  Serial1.println(success);
   return (success);
 }
 
 int findCanSettings(int _clock, int _bitRate)
 {
-   for (int i=0;i<(sizeof(brSettings)/sizeof(bitRateSetting));i++)
-   {
-      if (brSettings[i].Clock != _clock || brSettings[i].bitrate != _bitRate)
-      {
-        continue;
-      }
-      canSetting.prescale = brSettings[i].prescale;
-      canSetting.Seg1 = brSettings[i].Seg1;
-      canSetting.Seg2 = brSettings[i].Seg2;
-      return i;
-   }
-   return -1;
+  for (int i = 0; i < (sizeof(brSettings) / sizeof(bitRateSetting)); i++)
+  {
+    if (brSettings[i].Clock != _clock || brSettings[i].bitrate != _bitRate)
+    {
+      continue;
+    }
+    canSetting.prescale = brSettings[i].prescale;
+    canSetting.Seg1 = brSettings[i].Seg1;
+    canSetting.Seg2 = brSettings[i].Seg2;
+    return i;
+  }
+  return -1;
 }
 
-
-
-uint8_t rxDataLengthFD(uint32_t _data_length, bool FD) 
+uint8_t rxDataLengthFD(uint32_t _data_length, bool FD)
 {
-  union DataLength 
+  union DataLength
   {
     uint32_t value;
-    struct 
+    struct
     {
       uint16_t ignored_bits;
-      uint8_t data_length:4;
-      uint8_t ignored:4;
+      uint8_t data_length : 4;
+      uint8_t ignored : 4;
     } classic;
-    struct 
+    struct
     {
       uint16_t ignored_bits;
-      uint8_t data_length:3;
-      uint8_t FD:1;
-      uint8_t ignored:4;
+      uint8_t data_length : 3;
+      uint8_t FD : 1;
+      uint8_t ignored : 4;
     } FD;
   };
 
@@ -720,53 +798,79 @@ uint8_t rxDataLengthFD(uint32_t _data_length, bool FD)
   dataLength.value = _data_length;
 
   uint8_t len = dataLength.classic.data_length;
-  if (len > 8) len = 8;
+  if (len > 8)
+    len = 8;
 
-  if (FD && dataLength.classic.data_length > 8) 
+  if (FD && dataLength.classic.data_length > 8)
   {
-    switch (dataLength.FD.data_length) 
+    switch (dataLength.FD.data_length)
     {
-      case 1:        len = 12;        break;
-      case 2:        len = 16;        break;
-      case 3:        len = 20;        break;
-      case 4:        len = 24;        break;
-      case 5:        len = 32;        break;
-      case 6:        len = 48;        break;
-      case 7:        len = 64;        break;
-      default:
-        break;
+    case 1:
+      len = 12;
+      break;
+    case 2:
+      len = 16;
+      break;
+    case 3:
+      len = 20;
+      break;
+    case 4:
+      len = 24;
+      break;
+    case 5:
+      len = 32;
+      break;
+    case 6:
+      len = 48;
+      break;
+    case 7:
+      len = 64;
+      break;
+    default:
+      break;
     }
   }
 
   return len;
 }
 
-
-uint32_t int_to_fdcan_dlc(int dlc) 
+uint32_t int_to_fdcan_dlc(int dlc)
 {
-  switch (dlc) {
-    case 0: return FDCAN_DLC_BYTES_0;
-    case 1: return FDCAN_DLC_BYTES_1;
-    case 2: return FDCAN_DLC_BYTES_2;
-    case 3: return FDCAN_DLC_BYTES_3;
-    case 4: return FDCAN_DLC_BYTES_4;
-    case 5: return FDCAN_DLC_BYTES_5;
-    case 6: return FDCAN_DLC_BYTES_6;
-    case 7: return FDCAN_DLC_BYTES_7;
-    case 8: return FDCAN_DLC_BYTES_8;
-    case 12: return FDCAN_DLC_BYTES_12;
-    case 16: return FDCAN_DLC_BYTES_16;
-    case 20: return FDCAN_DLC_BYTES_20;
-    case 24: return FDCAN_DLC_BYTES_24;
-    case 32: return FDCAN_DLC_BYTES_32;
-    case 48: return FDCAN_DLC_BYTES_48;
-    case 64: return FDCAN_DLC_BYTES_64;
-    default: return FDCAN_DLC_BYTES_0;
+  switch (dlc)
+  {
+  case 0:
+    return FDCAN_DLC_BYTES_0;
+  case 1:
+    return FDCAN_DLC_BYTES_1;
+  case 2:
+    return FDCAN_DLC_BYTES_2;
+  case 3:
+    return FDCAN_DLC_BYTES_3;
+  case 4:
+    return FDCAN_DLC_BYTES_4;
+  case 5:
+    return FDCAN_DLC_BYTES_5;
+  case 6:
+    return FDCAN_DLC_BYTES_6;
+  case 7:
+    return FDCAN_DLC_BYTES_7;
+  case 8:
+    return FDCAN_DLC_BYTES_8;
+  case 12:
+    return FDCAN_DLC_BYTES_12;
+  case 16:
+    return FDCAN_DLC_BYTES_16;
+  case 20:
+    return FDCAN_DLC_BYTES_20;
+  case 24:
+    return FDCAN_DLC_BYTES_24;
+  case 32:
+    return FDCAN_DLC_BYTES_32;
+  case 48:
+    return FDCAN_DLC_BYTES_48;
+  case 64:
+    return FDCAN_DLC_BYTES_64;
+  default:
+    return FDCAN_DLC_BYTES_0;
   }
 }
-
-
-
-
-
- 
